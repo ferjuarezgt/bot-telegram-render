@@ -74,7 +74,9 @@ async def recibir_nombre(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(botones)
 
-    await update.message.reply_text("Tu imagen está lista. Puedes descargarla aquí:", reply_markup=reply_markup)
+    # Enviar vista previa como foto y luego el botón
+    with open(imagen_generada, "rb") as img_file:
+        await update.message.reply_photo(photo=img_file, caption="Tu imagen está lista. Puedes descargarla como archivo:", reply_markup=reply_markup)
 
 
 async def manejar_boton(update: Update, context: ContextTypes.DEFAULT_TYPE):
