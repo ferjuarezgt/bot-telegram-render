@@ -2,8 +2,8 @@ import os
 import csv
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, CallbackQueryHandler, filters
 
 BOT_TOKEN = os.getenv("BOT_TOKEN") or "7672348403:AAGH7nf2y-mGMsDzT--SAYrRQU5NzMudgso"
 
@@ -65,12 +65,33 @@ async def recibir_nombre(update: Update, context: ContextTypes.DEFAULT_TYPE):
     imagen_generada = generar_imagen(nombre)
     guardar_estadistica(nombre)
 
-    await update.message.reply_photo(photo=open(imagen_generada, "rb"))
-    os.remove(imagen_generada)
+    # Guardamos el nombre temporalmente para el botón
+    context.user_data["ultima_imagen"] = imagen_generada
+
+    # Crear botón para descargar
+    botones = [
+        [InlineKeyboardButton("📎 Descargar imagen", callback_data="descargar_imagen")]
+    ]
+    reply_markup = InlineKeyboardMarkup(botones)
+
+    await update.message.reply_text("Tu imagen está lista. Puedes descargarla aquí:", reply_markup=reply_markup)
+
+
+async def manejar_boton(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    imagen_generada = context.user_data.get("ultima_imagen")
+    if imagen_generada and os.path.exists(imagen_generada):
+        await query.message.reply_document(document=open(imagen_generada, "rb"))
+        os.remove(imagen_generada)
+    else:
+        await query.message.reply_text("⚠️ No se encontró la imagen. Intenta generar una nueva.")
 
 
 if __name__ == "__main__":
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(manejar_boton))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, recibir_nombre))
     app.run_polling()
