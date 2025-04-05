@@ -13,11 +13,18 @@ ARCHIVO_ESTADISTICAS = "estadisticas.csv"
 
 
 def generar_imagen(nombre):
-    nombre = nombre.upper().strip()[:10]
+    nombre = nombre.upper().strip()
     img = Image.open(PLANTILLA_IMAGEN).convert("RGBA")
     draw = ImageDraw.Draw(img)
 
-    font_size = 160
+    # Ajustar tamaño de fuente según longitud del nombre
+    if len(nombre) <= 10:
+        font_size = 160
+    elif 11 <= len(nombre) <= 15:
+        font_size = 120
+    else:
+        font_size = 100
+
     font = ImageFont.truetype(FUENTE_PERSONALIZADA, font_size)
 
     width, height = img.size
@@ -48,7 +55,7 @@ def guardar_estadistica(nombre):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "👋 ¡Hola! Escribe el nombre que quieres en tu imagen (máx. 10 letras).\n\n"
+        "👋 ¡Hola! Escribe el nombre que quieres en tu imagen (máx. 15 letras).\n\n"
         "🎨 *Este bot fue creado con ❤️ por Fernando Juárez* para el 93° Aniversario de IDEC Guatemala.",
         parse_mode="Markdown"
     )
@@ -56,8 +63,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def recibir_nombre(update: Update, context: ContextTypes.DEFAULT_TYPE):
     nombre = update.message.text.strip()
-    if len(nombre) > 10:
-        await update.message.reply_text("❌ El nombre debe tener máximo 10 letras.")
+    if len(nombre) > 15:
+        await update.message.reply_text("❌ El nombre debe tener máximo 15 letras.")
         return
 
     await update.message.reply_text("✅ Generando tu imagen, por favor espera...")
